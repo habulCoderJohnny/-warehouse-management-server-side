@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion} = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -28,6 +28,16 @@ async function run () {
         const bikes = await cursor.toArray();
         res.send(bikes);
     });
+
+
+     //FIND ONE (id) 
+      app.get('/inventory/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = {_id: ObjectId(id) };
+        const bike = await productCollection.findOne(query);
+        res.send(bike);
+        console.log(query);
+     });
    
       
 
@@ -39,7 +49,7 @@ async function run () {
   run().catch(console.dir);
   console.log('MOTOR MANIA now CONNECTED');
 
-//log 
+//ui 
 app.get('/', (req,res)=>{
     res.send('Hello from my Universe server!');
 });
