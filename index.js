@@ -19,7 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run () {
     try{
       await client.connect();
-      const productCollection = client.db("Motor_mania").collection("Bikes")
+      const productCollection = client.db("motormania").collection("Bikes")
 
      //SENT DATA OF PRODUCT
       app.get('/bikes', async (req, res) => {
@@ -36,8 +36,23 @@ async function run () {
         const query = {_id: ObjectId(id) };
         const bike = await productCollection.findOne(query);
         res.send(bike);
-        console.log(query);
+        // console.log(query);
      });
+
+      // update id quantity
+      app.put('/bikes/:id', async(req, res)=>{
+        const id = req.params.id;
+        const updateQuantity = req.body.quantity;
+        // console.log(req.body.quantity)
+        const filter = { _id: ObjectId(id) };
+        const options = {upsert: true};
+        const updatedDoc = {
+            $set: { quantity: updateQuantity }
+        }
+        const result = await productCollection.updateOne(filter, updatedDoc, options);
+        res.send(result)
+    });
+
 
        //POST/ INSERT ONE (form) 
        app.post('/bikes', async (req, res) => {
