@@ -3,12 +3,29 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 
 const app = express();
 //middleware
 app.use(cors());
 app.use(express.json());
+
+
+// verify token function
+const verifyToken = (req,res,next) => {
+    const authHeader = req.headers.authorization
+    const token = authHeader && authHeader.split(' ')[1]
+    if(token === null) return res.status(401)
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,function(err,decoded){
+        if(err) {
+            return res.status(403).send({message: 'unAuth'})
+        }
+        req.decoded = decoded
+        next()
+    })
+}
+
 
 
 //CONNECTION
@@ -53,13 +70,46 @@ async function run () {
         res.send(result)
     });
 
-
        //POST/ INSERT ONE (form) 
        app.post('/bikes', async (req, res) => {
         const newItem = req.body;
         const result = await productCollection.insertOne(newItem);
         res.send(result);
     });
+
+    //post/add item item product
+    app.put('/bikes',verifyToken,async (req,res) => {
+        const item = req.body
+        const email = req.query.email
+        const decoded = req.decoded.email
+        if(email === decoded){
+            const result = await productCollection.insertOne(item)
+            res.send(result)
+        }
+    })
+    
+    //delete/inventory manage items
+
+    app.delete('/bikes',verifyToken, async(req,res) => {
+        const {id,email} = req.query
+        const decoded = req.decoded.email
+        if(email === decoded){
+            const query = {_id: ObjectId(id)}
+            const result = await productCollection.deleteOne(query)
+            res.send(result)
+        }else{
+            res.status(403).send({message: 'forbidden access'})
+        }
+    })
+
+         // login into jwt added api
+         app.post('/login',(req,res) => {
+            const email = req.body
+            const accessToken = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET,{
+                expiresIn: '1d'
+            });
+            res.send({accessToken})
+        })
    
       
 
